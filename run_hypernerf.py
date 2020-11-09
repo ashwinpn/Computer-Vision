@@ -785,6 +785,8 @@ def train():
                 'optimizer_state_dict': optimizer.state_dict(),
             }, path)
             print('Saved checkpoints at', path)
+            path = os.path.join(basedir, expname, '{:06d}.pth'.format(i))
+            torch.save(render_kwargs_train['network_fn'].state_dict(), path)
 
         if i%args.i_video==0 and i > 0:
             # Turn on testing mode
