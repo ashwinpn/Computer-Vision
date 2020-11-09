@@ -752,8 +752,6 @@ def train():
                 target_s = target[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
 
         #####  Core optimization loop  #####
-        print(batch_rays.size())
-        assert 1 == 0
         rgb, disp, acc, extras = render(H, W, focal, chunk=args.chunk, rays=batch_rays,
                                                 verbose=i < 10, retraw=True,
                                                 **render_kwargs_train)
@@ -772,16 +770,38 @@ def train():
         loss.backward()
         optimizer.step()
         
-        ### Student Model Training ###
-        teacher_input = torch.rand(1024*64, 90).to(device)
-        rgb, disp, acc, extras = render(H, W, focal, chunk=args.chunk, rays=teacher_input,
+        ### Student Model Training ###############################################################
+        # Random input for both student and teacher
+        random_input = torch.rand(2, 1024, 3).to(device)
+        # Get teacher output and hidden states
+        teacher_rgb, teacher_disp, teacher_acc, teacher_extras = render(H, W, focal, chunk=args.chunk, rays=random_input,
                                                 verbose=i < 10, retraw=True,
                                                 **render_kwargs_train)
+        teacher_hidden_states = render_kwargs_test['network_fn'].hidden_states
+        
+        # Put student model on device
         render_kwargs_test['network_fn'].cpu()
         render_kwargs_test['network_fine'].cpu()
         student_kwargs['network_fn'].to(device)
+        # Get student output
+        student_rgb, student_disp, student_acc, student_extras = render(H, W, focal, chunk=args.chunk, rays=random_input,
+                                                verbose=i < 10, retraw=True,
+                                                **student_kwargs)
+        student_hidden_states = student_kwargs['network_fn'].hidden_states
+        # Compute student loss
+        student_optimizer.zero_grad()
+        student_loss = F.mse_loss(student_rgb, teacher_rgb)# + F.mse_loss(student_disp, teacher_disp) + F.mse_loss(student_acc, teacher_acc)
+        for st_hs,tc_hs in zip(student_hidden_states, teacher_hidden_states):
+            student_loss += F.mse_loss(st_hs, tc_hs)
+        student_loss.backward()
+        print("Student loss:", student_loss.item())
+        student_optimizer.step()
+        # Put teacher model(s) back on device
+        student_kwargs['network_fn'].cpu()
+        render_kwargs_test['network_fn'].to(device)
+        render_kwargs_test['network_fine'].to(device)
         
-        ##############################
+        ##########################################################################################
 
         # NOTE: IMPORTANT!
         ###   update learning rate   ###
