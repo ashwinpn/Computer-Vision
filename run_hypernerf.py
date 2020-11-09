@@ -189,8 +189,11 @@ def create_nerf(args):
     model = NeRF(D=args.netdepth, W=args.netwidth,
                  input_ch=input_ch, output_ch=output_ch, skips=skips,
                  input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
-    #hyper_model = HyperNeRF(model)
+    student_model = NeRF(D=args.netdepth, W=args.netwidth,
+                        input_ch=input_ch, output_ch=output_ch, skips=skips,
+                        input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
     grad_vars = list(model.parameters())
+    student_grad_vars = list(student_model.parameters())
 
     model_fine = None
     if args.N_importance > 0:
@@ -206,6 +209,7 @@ def create_nerf(args):
 
     # Create optimizer
     optimizer = torch.optim.Adam(params=grad_vars, lr=args.lrate, betas=(0.9, 0.999))
+    student_optimizer = torch.optim.Adam(params=student_grad_vars, lr=args.lrate, betas=(0.9, 0.999))
 
     start = 0
     basedir = args.basedir
@@ -257,8 +261,12 @@ def create_nerf(args):
     render_kwargs_test = {k : render_kwargs_train[k] for k in render_kwargs_train}
     render_kwargs_test['perturb'] = False
     render_kwargs_test['raw_noise_std'] = 0.
+    
+    student_kwargs = {k : render_kwargs_train[k] for k in render_kwargs_train}
+    student_kwargs['network_fn'] = student_model
+    student_kwargs['network_fine'] = None
 
-    return render_kwargs_train, render_kwargs_test, start, grad_vars, optimizer
+    return render_kwargs_train, render_kwargs_test, start, grad_vars, optimizer, student_kwargs, student_grad_vars, student_optimizer
 
 
 def raw2outputs(raw, z_vals, rays_d, raw_noise_std=0, white_bkgd=False, pytest=False):
@@ -625,7 +633,7 @@ def train():
             file.write(open(args.config, 'r').read())
 
     # Create nerf model
-    render_kwargs_train, render_kwargs_test, start, grad_vars, optimizer = create_nerf(args)
+    render_kwargs_train, render_kwargs_test, start, grad_vars, optimizer, student_kwargs, student_grad_vars, student_optimizer = create_nerf(args)
     global_step = start
 
     bds_dict = {
@@ -744,6 +752,8 @@ def train():
                 target_s = target[select_coords[:, 0], select_coords[:, 1]]  # (N_rand, 3)
 
         #####  Core optimization loop  #####
+        print(batch_rays.size())
+        assert 1 == 0
         rgb, disp, acc, extras = render(H, W, focal, chunk=args.chunk, rays=batch_rays,
                                                 verbose=i < 10, retraw=True,
                                                 **render_kwargs_train)
@@ -761,6 +771,17 @@ def train():
 
         loss.backward()
         optimizer.step()
+        
+        ### Student Model Training ###
+        teacher_input = torch.rand(1024*64, 90).to(device)
+        rgb, disp, acc, extras = render(H, W, focal, chunk=args.chunk, rays=teacher_input,
+                                                verbose=i < 10, retraw=True,
+                                                **render_kwargs_train)
+        render_kwargs_test['network_fn'].cpu()
+        render_kwargs_test['network_fine'].cpu()
+        student_kwargs['network_fn'].to(device)
+        
+        ##############################
 
         # NOTE: IMPORTANT!
         ###   update learning rate   ###
