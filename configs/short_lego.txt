@@ -17,4 +17,7 @@ precrop_iters = 500
 precrop_frac = 0.5
 
 half_res = True
+
 epochs = 1000
+i_weights = 1000
+i_video = 1000
