@@ -39,9 +39,6 @@ def run_network(inputs, viewdirs, fn, embed_fn, embeddirs_fn, netchunk=1024*64):
     """
     inputs_flat = torch.reshape(inputs, [-1, inputs.shape[-1]])
     embedded = embed_fn(inputs_flat)
-    
-    print("INPUTS SIZE", inputs.size(), viewdirs.size())
-    assert 1 == 0
 
     if viewdirs is not None:
         input_dirs = viewdirs[:,None].expand(inputs.shape)
@@ -387,6 +384,8 @@ def render_rays(ray_batch,
 
 
 #     raw = run_network(pts)
+    print("Sizes", pts.size(), viewdirs.size())
+    assert 1 == 0
     raw = network_query_fn(pts, viewdirs, network_fn)
     rgb_map, disp_map, acc_map, weights, depth_map = raw2outputs(raw, z_vals, rays_d, raw_noise_std, white_bkgd, pytest=pytest)
 
