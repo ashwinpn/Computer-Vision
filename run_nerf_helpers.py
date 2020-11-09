@@ -99,8 +99,10 @@ class NeRF(nn.Module):
     def forward(self, x):
         input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
         h = input_pts
+        self.hidden_states = []
         for i, l in enumerate(self.pts_linears):
             h = self.pts_linears[i](h)
+            hidden_states.append(h)
             h = F.relu(h)
             if i in self.skips:
                 h = torch.cat([input_pts, h], -1)
@@ -112,6 +114,7 @@ class NeRF(nn.Module):
         
             for i, l in enumerate(self.views_linears):
                 h = self.views_linears[i](h)
+                hidden_states.append(h)
                 h = F.relu(h)
 
             rgb = self.rgb_linear(h)
