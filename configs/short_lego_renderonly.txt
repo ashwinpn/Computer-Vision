@@ -20,5 +20,5 @@ half_res = True
 
 epochs = 1000
 i_weights = 1000
-ft_path = logs/blender_paper_lego/
+ft_path = logs/blender_paper_lego/001000.tar
 render_only = True
