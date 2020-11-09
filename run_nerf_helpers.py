@@ -102,7 +102,7 @@ class NeRF(nn.Module):
         self.hidden_states = []
         for i, l in enumerate(self.pts_linears):
             h = self.pts_linears[i](h)
-            hidden_states.append(h)
+            self.hidden_states.append(h)
             h = F.relu(h)
             if i in self.skips:
                 h = torch.cat([input_pts, h], -1)
@@ -114,7 +114,7 @@ class NeRF(nn.Module):
         
             for i, l in enumerate(self.views_linears):
                 h = self.views_linears[i](h)
-                hidden_states.append(h)
+                self.hidden_states.append(h)
                 h = F.relu(h)
 
             rgb = self.rgb_linear(h)
