@@ -149,6 +149,132 @@ class NeRF(nn.Module):
         idx_alpha_linear = 2 * self.D + 6
         self.alpha_linear.weight.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear]))
         self.alpha_linear.bias.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear+1]))
+        
+class HyperNeRF(nn.Module):
+    def __init__(self, nerf, Z_dim = 16, C_dim = 1, verbose=False):
+        super(HyperNeRF, self).__init__()
+        self.D = nerf.D
+        self.W = nerf.W
+        self.input_ch = nerf.input_ch
+        self.input_ch_views = nerf.input_ch_views
+        self.skips = nerf.skips
+        self.use_viewdirs = nerf.use_viewdirs
+
+        # Replace with actual latent variable
+        self.Z = torch.rand(Z_dim)
+
+        weights_and_biases = []
+        for name,param in nerf.named_parameters():
+            if "bias" in name:
+                weights_and_biases[-1] = torch.cat((weights_and_biases[-1], param[...,None]), dim=1)
+            else:
+                weights_and_biases.append(param)
+
+        self.target_shape = []
+        weight_gen_sizes = []
+        final_size = 0
+        for (i,w_and_b) in enumerate(weights_and_biases):
+            self.target_shape.append(w_and_b.shape)
+            weight_gen_sizes.append(torch.Size([w_and_b.shape[0], C_dim]))
+
+        if verbose:
+            print("Target size\n----------------------")
+        for shape in self.target_shape:
+            if verbose:
+                print(shape)
+
+        if verbose:
+            print("----------------------")
+        if verbose:
+            print("C size\n----------------------")
+
+        C = torch.Tensor(weight_gen_sizes[0])
+        if verbose:
+            print(weight_gen_sizes[0])
+        for shape in weight_gen_sizes[1:]:
+            if verbose:
+                print(shape)
+            C = torch.cat((C, torch.Tensor(shape)), dim=0)
+
+        self.C_shape = C.shape
+
+        if verbose: print(" -- OR -- \n", self.C_shape, "\n")
+
+        self.net_E = nn.Sequential(
+                nn.Linear(Z_dim, Z_dim*2),
+                nn.ReLU(inplace=True),
+                nn.Linear(Z_dim*2, Z_dim*4),
+                nn.ReLU(inplace=True),
+                nn.Linear(Z_dim*4, self.C_shape[0] * C_dim)
+        )
+
+        self.linears = nn.ModuleList()
+        for size in self.target_shape:
+            t_len = size[1]
+            self.linears.append(nn.Linear(size[0] * C_dim, size[0]*t_len))
+            
+    def NeRF_Functional(self, X, Weights, verbose=False):
+        input_pts, input_views = torch.split(X, [self.input_ch, self.input_ch_views], dim=-1)
+        H = input_pts
+        for i in range(0, self.D):
+            w = Weights[i][:,:-1]
+            b = Weights[i][:,-1]
+            H = F.relu(F.linear(H, w, bias=b))
+            if i in self.skips:
+                H = torch.cat([input_pts, H], -1)
+
+        VIEW_LINEAR = [8]
+        ALPHA = 10
+        FEATURE = 9
+        RGB = 11
+
+        if self.use_viewdirs:
+            alpha = F.linear(H, Weights[ALPHA][:,:-1], bias=Weights[ALPHA][:,-1])
+            feature = F.linear(H, Weights[FEATURE][:,:-1], bias=Weights[FEATURE][:,-1])
+            H = torch.cat([feature, input_views], -1)
+
+            for i in VIEW_LINEAR:
+                H = F.relu(F.linear(H, Weights[i][:,:-1], bias=Weights[i][:,-1]))
+
+            rgb = F.linear(H, Weights[RGB][:,:-1], bias=Weights[RGB][:,-1])
+            outputs = torch.cat([rgb, alpha], -1)
+        else:
+            OUTPUT_LINEAR = 9
+            outputs = F.linear(H, Weights[OUTPUT_LINEAR][:,:-1], bias=Weights[OUTPUT_LINEAR][:,-1])
+
+        return outputs
+
+    def forward(self, X, verbose=False):
+        total_params = 0
+        if verbose:
+            print("Input", self.Z.shape, sep='\t\t|\t\t')
+
+        C = self.Z#Z
+        for layer in self.net_E:
+            C = layer(C)
+            num_params = sum([p.numel() for p in layer.parameters()])
+            total_params += num_params
+            if verbose:
+                print(layer.__class__.__name__, C.shape, num_params, sep='\t\t|\t\t')
+
+        weights = []
+        c_idx = 0
+        for size, linear in zip(self.target_shape, self.linears):
+            t_len = size[0]
+            C_sub = C[c_idx:c_idx+t_len*self.C_shape[1]]
+            weights.append(linear(C_sub).view(size))
+            c_idx += t_len
+
+            num_params = sum([p.numel() for p in linear.parameters()])
+            total_params += num_params
+            if verbose:
+                print(linear.__class__.__name__, weights[-1].shape, num_params, sep='\t\t|\t\t')
+
+        if verbose:
+            print("Total Parameters:", total_params, '\n')
+
+        return self.NeRF_Functional(X, weights, verbose=verbose)
+
 
 
 
