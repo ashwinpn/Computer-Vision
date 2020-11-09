@@ -1,4 +1,4 @@
-expname = blender_paper_lego
+expname = blender_paper_lego_renderonly
 basedir = ./logs
 datadir = ./data/nerf_synthetic/lego
 dataset_type = blender
@@ -20,3 +20,5 @@ half_res = True
 
 epochs = 1000
 i_weights = 1000
+ft_path = logs/blender_paper_lego/
+render_only = True
