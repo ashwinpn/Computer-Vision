@@ -782,7 +782,7 @@ def train():
         # Put student model on device
         render_kwargs_test['network_fn'].cpu()
         render_kwargs_test['network_fine'].cpu()
-        student_kwargs['network_fn'].to(device)
+        student_kwargs['network_fn'] = student_kwargs['network_fn'].to(device)
         # Get student output
         student_rgb, student_disp, student_acc, student_extras = render(H, W, focal, chunk=args.chunk, rays=random_input,
                                                 verbose=i < 10, retraw=True,
@@ -798,8 +798,8 @@ def train():
         student_optimizer.step()
         # Put teacher model(s) back on device
         student_kwargs['network_fn'].cpu()
-        render_kwargs_test['network_fn'].to(device)
-        render_kwargs_test['network_fine'].to(device)
+        render_kwargs_test['network_fn'] = render_kwargs_test['network_fn'].to(device)
+        render_kwargs_test['network_fine'] = render_kwargs_test['network_fine'].to(device)
         
         ##########################################################################################
 
