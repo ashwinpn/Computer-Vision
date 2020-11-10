@@ -78,6 +78,8 @@ class NeRF(nn.Module):
         self.input_ch_views = input_ch_views
         self.skips = skips
         self.use_viewdirs = use_viewdirs
+        self.maxes = torch.tensor([-9999.0 for _ in range(90)])
+        self.mins = torch.tensor([9999.0 for _ in range(90)])
         
         self.pts_linears = nn.ModuleList(
             [nn.Linear(input_ch, W)] + [nn.Linear(W, W) if i not in self.skips else nn.Linear(W + input_ch, W) for i in range(D-1)])
@@ -97,8 +99,12 @@ class NeRF(nn.Module):
             self.output_linear = nn.Linear(W, output_ch)
 
     def forward(self, x):
-        print(x.size())
-        assert 1 == 0
+        with torch.no_grad():
+            max = x.max(dim=0)[0]
+            min = x.min(dim=0)[0]
+            self.maxes = torch.stack([self.maxes, max]).max(dim=0)[0]
+            self.mins = torch.stack([self.mins, min]).min(dim=0)[0]
+    
         input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
         h = input_pts
         self.hidden_states = []

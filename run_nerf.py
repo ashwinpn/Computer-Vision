@@ -778,6 +778,10 @@ def train():
                 'network_fn_state_dict': render_kwargs_train['network_fn'].state_dict(),
                 'network_fine_state_dict': render_kwargs_train['network_fine'].state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
+                'maxes': render_kwargs_train['network_fn'].maxes,
+                'mins': render_kwargs_train['network_fn'].mins,
+                'fine_maxes': render_kwargs_train['network_fine'].maxes,
+                'fine_mins': render_kwargs_train['network_fine'].mins,
             }, path)
             print('Saved checkpoints at', path)
 
