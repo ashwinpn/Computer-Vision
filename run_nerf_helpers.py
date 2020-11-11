@@ -171,6 +171,8 @@ class HyperNeRF(nn.Module):
         self.input_ch_views = nerf.input_ch_views
         self.skips = nerf.skips
         self.use_viewdirs = nerf.use_viewdirs
+        self.maxes = torch.tensor([-9999.0 for _ in range(90)])
+        self.mins = torch.tensor([9999.0 for _ in range(90)])
 
         # Replace with actual latent variable
         #self.Z = torch.rand(Z_dim)
@@ -258,7 +260,13 @@ class HyperNeRF(nn.Module):
 
         return outputs
 
-    def forward(self, X, verbose=False):
+    def forward(self, X, verbose=False, track_values=True):
+        if track_values:
+            with torch.no_grad():
+                max = x.max(dim=0)[0]
+                min = x.min(dim=0)[0]
+                self.maxes = torch.stack([self.maxes, max]).max(dim=0)[0]
+                self.mins = torch.stack([self.mins, min]).min(dim=0)[0]
         total_params = 0
         if verbose:
             print("Input", self.Z.shape, sep='\t\t|\t\t')
