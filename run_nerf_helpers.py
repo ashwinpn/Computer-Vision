@@ -231,11 +231,14 @@ class HyperNeRF(nn.Module):
             
     def NeRF_Functional(self, X, Weights, verbose=False):
         input_pts, input_views = torch.split(X, [self.input_ch, self.input_ch_views], dim=-1)
+        self.hidden_states = []
         H = input_pts
         for i in range(0, self.D):
             w = Weights[i][:,:-1]
             b = Weights[i][:,-1]
-            H = F.relu(F.linear(H, w, bias=b))
+            H = F.linear(H, w, bias=b)
+            self.hidden_states.append(H)
+            H = F.relu(H)
             if i in self.skips:
                 H = torch.cat([input_pts, H], -1)
 
@@ -250,7 +253,9 @@ class HyperNeRF(nn.Module):
             H = torch.cat([feature, input_views], -1)
 
             for i in VIEW_LINEAR:
-                H = F.relu(F.linear(H, Weights[i][:,:-1], bias=Weights[i][:,-1]))
+                H = F.linear(H, Weights[i][:,:-1], bias=Weights[i][:,-1])
+                self.hidden_states.append(H)
+                H = F.relu(H)
 
             rgb = F.linear(H, Weights[RGB][:,:-1], bias=Weights[RGB][:,-1])
             outputs = torch.cat([rgb, alpha], -1)
