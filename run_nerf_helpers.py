@@ -263,8 +263,8 @@ class HyperNeRF(nn.Module):
     def forward(self, X, verbose=False, track_values=True):
         if track_values:
             with torch.no_grad():
-                max = x.max(dim=0)[0]
-                min = x.min(dim=0)[0]
+                max = X.max(dim=0)[0]
+                min = X.min(dim=0)[0]
                 self.maxes = torch.stack([self.maxes, max]).max(dim=0)[0]
                 self.mins = torch.stack([self.mins, min]).min(dim=0)[0]
         total_params = 0
