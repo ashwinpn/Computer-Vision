@@ -188,14 +188,22 @@ def create_nerf(args):
     skips = [4]
     model = NeRF(D=args.netdepth, W=args.netwidth,
                  input_ch=input_ch, output_ch=output_ch, skips=skips,
-                 input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+                 input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
+    if args.hyper:
+        model = HyperNeRF(model, dev=device).to(device)
+    else:
+        model = model.to(device)
     grad_vars = list(model.parameters())
 
     model_fine = None
     if args.N_importance > 0:
         model_fine = NeRF(D=args.netdepth_fine, W=args.netwidth_fine,
                           input_ch=input_ch, output_ch=output_ch, skips=skips,
-                          input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs).to(device)
+                          input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
+        if args.hyper:
+            model_fine = HyperNeRF(model_fine, dev=device).to(device)
+        else:
+            model_fine = model_fine.to(device)
         grad_vars += list(model_fine.parameters())
 
     network_query_fn = lambda inputs, viewdirs, network_fn : run_network(inputs, viewdirs, network_fn,
@@ -527,8 +535,12 @@ def config_parser():
                         help='frequency of testset saving')
     parser.add_argument("--i_video",   type=int, default=50000, 
                         help='frequency of render_poses video saving')
+                        
+    # HyperNeRF
     parser.add_argument("--epochs", type=int, default=200000,
                         help="Number of iterations to train for")
+    parser.add_argument("--hyper", action='store_true',
+                        help="Use HyperNeRF as model")
 
     return parser
 

@@ -163,7 +163,7 @@ class NeRF(nn.Module):
         self.alpha_linear.bias.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear+1]))
         
 class HyperNeRF(nn.Module):
-    def __init__(self, nerf, Z_dim = 16, C_dim = 1, verbose=False):
+    def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False, dev='cpu'):
         super(HyperNeRF, self).__init__()
         self.D = nerf.D
         self.W = nerf.W
@@ -173,7 +173,9 @@ class HyperNeRF(nn.Module):
         self.use_viewdirs = nerf.use_viewdirs
 
         # Replace with actual latent variable
-        self.Z = torch.rand(Z_dim)
+        #self.Z = torch.rand(Z_dim)
+        self.Class_dim = Class_dim
+        self.Class = torch.zeros(Class_dim).to(dev)
 
         weights_and_biases = []
         for name,param in nerf.named_parameters():
@@ -213,11 +215,11 @@ class HyperNeRF(nn.Module):
         if verbose: print(" -- OR -- \n", self.C_shape, "\n")
 
         self.net_E = nn.Sequential(
-                nn.Linear(Z_dim, Z_dim*2),
+                nn.Linear(Class_dim, Class_dim*2),
                 nn.ReLU(inplace=True),
-                nn.Linear(Z_dim*2, Z_dim*4),
+                nn.Linear(Class_dim*2, Class_dim*4),
                 nn.ReLU(inplace=True),
-                nn.Linear(Z_dim*4, self.C_shape[0] * C_dim)
+                nn.Linear(Class_dim*4, self.C_shape[0] * C_dim)
         )
 
         self.linears = nn.ModuleList()
@@ -261,7 +263,7 @@ class HyperNeRF(nn.Module):
         if verbose:
             print("Input", self.Z.shape, sep='\t\t|\t\t')
 
-        C = self.Z#Z
+        C = self.Class#Z
         for layer in self.net_E:
             C = layer(C)
             num_params = sum([p.numel() for p in layer.parameters()])
