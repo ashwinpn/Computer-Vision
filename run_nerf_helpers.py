@@ -163,7 +163,7 @@ class NeRF(nn.Module):
         self.alpha_linear.bias.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear+1]))
         
 class HyperNeRF(nn.Module):
-    def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False, dev='cpu'):
+    def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False):
         super(HyperNeRF, self).__init__()
         self.D = nerf.D
         self.W = nerf.W
@@ -177,7 +177,9 @@ class HyperNeRF(nn.Module):
         # Replace with actual latent variable
         #self.Z = torch.rand(Z_dim)
         self.Class_dim = Class_dim
-        self.Class = torch.zeros(Class_dim).to(dev)
+        cl = [0 for _ in range(Class_dim)]
+        cl[0] = 1
+        self.Class = torch.tensor(cl)
 
         weights_and_biases = []
         for name,param in nerf.named_parameters():
@@ -217,11 +219,11 @@ class HyperNeRF(nn.Module):
         if verbose: print(" -- OR -- \n", self.C_shape, "\n")
 
         self.net_E = nn.Sequential(
-                nn.Linear(Class_dim, Class_dim*2),
+                nn.Linear(Class_dim, 100),
                 nn.ReLU(inplace=True),
-                nn.Linear(Class_dim*2, Class_dim*4),
+                nn.Linear(100, 1000),
                 nn.ReLU(inplace=True),
-                nn.Linear(Class_dim*4, self.C_shape[0] * C_dim)
+                nn.Linear(1000, self.C_shape[0] * C_dim)
         )
 
         self.linears = nn.ModuleList()
