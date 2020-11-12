@@ -163,7 +163,7 @@ class NeRF(nn.Module):
         self.alpha_linear.bias.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear+1]))
         
 class HyperNeRF(nn.Module):
-    def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False):
+    def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False, dev='cpu'):
         super(HyperNeRF, self).__init__()
         self.D = nerf.D
         self.W = nerf.W
@@ -179,7 +179,7 @@ class HyperNeRF(nn.Module):
         self.Class_dim = Class_dim
         cl = [0 for _ in range(Class_dim)]
         cl[0] = 1
-        self.Class = torch.tensor(cl)
+        self.Class = torch.tensor(cl, requires_grad=False).to(dev)
 
         weights_and_biases = []
         for name,param in nerf.named_parameters():
