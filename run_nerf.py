@@ -544,6 +544,8 @@ def config_parser():
                         help="Number of iterations to train for")
     parser.add_argument("--hyper", action='store_true',
                         help="Use HyperNeRF as model")
+    parser.add_argument("--skips", type=int, default=4,
+                        help="Which layer to add skip connection to in model")
 
     return parser
 
