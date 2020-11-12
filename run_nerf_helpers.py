@@ -119,6 +119,7 @@ class NeRF(nn.Module):
         if self.use_viewdirs:
             alpha = self.alpha_linear(h)
             feature = self.feature_linear(h)
+            self.hidden_states.append(feature)
             h = torch.cat([feature, input_views], -1)
         
             for i, l in enumerate(self.views_linears):
