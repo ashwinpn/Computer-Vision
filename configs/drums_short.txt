@@ -18,5 +18,5 @@ precrop_frac = 0.5
 
 half_res = True
 
-epochs = 1000
-i_weights = 1000
+epochs = 2000
+i_weights = 2000
