@@ -137,7 +137,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      fig.savefig(args.plot_file.format(action_layers[0][0])
+      fig.savefig(args.plot_file.format(action_layers[0][0]))
       plt.close(fig)
       if args.layer_queue:
         active_layers.append(args.layer_queue.popleft())
