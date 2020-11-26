@@ -62,7 +62,7 @@ teacher_model.eval()
 teacher_model_fine = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
 teacher_model_fine.load_state_dict(saved['network_fine_state_dict'])
 teacher_model_fine.eval()
-print(teacher_model)
+print("Teacher model =", teacher_model)
 
 # NeRF class has been modified to track mins and maxes for all input
 maxes = saved['maxes'].to(device)
@@ -73,7 +73,7 @@ print("mins =", mins)
 # Instantiate student models
 student_model = NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True)
 student_model_fine = NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True)
-print(student_model)
+print("Student model =", student_model)
 
 num_params_teacher = 0
 for param in teacher_model.parameters():
