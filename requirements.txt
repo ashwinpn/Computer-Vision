@@ -7,3 +7,4 @@ configargparse
 tensorboard==1.15.0
 tqdm
 opencv-python
+argparse
