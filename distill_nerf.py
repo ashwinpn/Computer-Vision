@@ -142,7 +142,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       plt.close(fig)
       print("Plotted to", plot_path)
       # Saving weights after each layer is finished
-      model_save_path = "./logs/blender_paper_lego/student_model_{}.tar".format(active_layers[0][0]))
+      model_save_path = "./logs/blender_paper_lego/student_model_{}.tar".format(active_layers[0][0])
       if args.layer_queue:
         active_layers.append(args.layer_queue.popleft())
         #active_layers = [args.layer_queue.popleft()]
