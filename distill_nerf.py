@@ -100,7 +100,7 @@ student_optim = torch.optim.Adam(list(student_model.parameters()) + list(student
 
 total_epochs = 0
 done = False
-for tqdm(range(args.max_epochs)):
+for _ in tqdm(range(args.max_epochs)):
   for epoch in tqdm(range(args.status_freq)):
     # Generate random input
     rand_input = torch.rand(int(1024*64), args.input_ch + args.input_ch_views).to(device)
