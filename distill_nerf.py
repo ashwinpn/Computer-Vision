@@ -99,7 +99,8 @@ teacher_model_fine = teacher_model_fine.to(device)
 student_optim = torch.optim.Adam(list(student_model.parameters()) + list(student_model_fine.parameters()), lr=args.lr)
 
 total_epochs = 0
-while total_epochs < args.max_epochs and active_layers != []:
+done = False
+for tqdm(range(args.max_epochs)):
   for epoch in tqdm(range(args.status_freq)):
     # Generate random input
     rand_input = torch.rand(int(1024*64), args.input_ch + args.input_ch_views).to(device)
@@ -163,7 +164,8 @@ while total_epochs < args.max_epochs and active_layers != []:
         active_layers.append(args.layer_queue.popleft())
         #active_layers = [args.layer_queue.popleft()]
       else:
-        active_layers = []
+        #active_layers = []
+        done = True
 
     # Record loss according to log frequency
     if (total_epochs + epoch) % args.log_freq == 0:
@@ -177,6 +179,9 @@ while total_epochs < args.max_epochs and active_layers != []:
   print("Epoch: {}, Loss: {}".format(total_epochs, loss.item()))
   print("Active layer:", active_layers)
   print("Layers in queue:", args.layer_queue)
+  
+  if done:
+    break
 
 # end while total_epochs < args.max_epochs and active_layers != []:
 
