@@ -151,13 +151,13 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      plot_path = args.plot_path.format(active_layers[0][0])
+      plot_path = args.plot_path.format(active_layers[-1][0])
       fig.savefig(plot_path)
       plt.close(fig)
       print("Plotted to", plot_path)
       
       # Save weights after each layer is finished
-      model_save_path = args.save_path.format("layer_" + str(active_layers[0][0]))
+      model_save_path = args.save_path.format("layer_" + str(active_layers[-1][0]))
       save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path)
       
       # Get next layer from queue, unless done!
