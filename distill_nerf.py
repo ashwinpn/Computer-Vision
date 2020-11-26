@@ -10,6 +10,15 @@ from collections import deque
 import argparse
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+def save_model(global_step, student_model, student_model_fine, student_optim, model_save_path):
+  torch.save({
+      'global_step': global_step,
+      'network_fn_state_dict': student_model.state_dict(),
+      'network_fine_state_dict': student_model_fine.state_dict(),
+      'optimizer_state_dict': student_optim.state_dict(),
+  }, model_save_path)
+  print("saved to", model_save_path)
+
 parser = argparse.ArgumentParser()
 parser.add_argument(dest="nerf_path", type=str, help="Path to NeRF file")
 parser.add_argument("--t_depth", type=int, default=8, help="Depth of teacher NeRF")
@@ -25,7 +34,8 @@ parser.add_argument("--lr", type=float, default=5e-4, help="Initial learning rat
 parser.add_argument("--loss_thresh", type=float, default=.1, help="Active layers are done training when total loss is below this amount")
 parser.add_argument("--max_epochs", type=int, default=200000, help="Number of epochs to train for")
 parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|6,6|7,7|8,8|9,9|O,O", help="Layers to be compared during distillation")
-parser.add_argument("--plot_file", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
+parser.add_argument("--plot_path", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
+parser.add_argument("--save_path", type=str, default="./logs/blender_paper_lego/student_model_{}.tar", help="Path to save student models to, include {} for later formatting")
 
 args = parser.parse_args()
 
@@ -134,37 +144,42 @@ while total_epochs < args.max_epochs and active_layers != []:
     # Check to see if current active layers are within threshold
     if loss < args.loss_thresh:
       print("Completed layers: ", active_layers)
+      
+      # Plot loss to file
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      plot_path = args.plot_file.format(active_layers[0][0])
+      plot_path = args.plot_path.format(active_layers[0][0])
       fig.savefig(plot_path)
       plt.close(fig)
       print("Plotted to", plot_path)
-      # Saving weights after each layer is finished
-      model_save_path = "./logs/blender_paper_lego/student_model_{}.tar".format(active_layers[0][0])
+      
+      # Save weights after each layer is finished
+      model_save_path = args.save_path.format(str("layer_" + active_layers[0][0]))
+      save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path):
+      
+      # Get next layer from queue, unless done!
       if args.layer_queue:
         active_layers.append(args.layer_queue.popleft())
         #active_layers = [args.layer_queue.popleft()]
       else:
         active_layers = []
-      torch.save({
-          'global_step': saved['global_step'],
-          'network_fn_state_dict': student_model.state_dict(),
-          'network_fine_state_dict': student_model_fine.state_dict(),
-          'optimizer_state_dict': student_optim.state_dict(),
-      }, model_save_path)
-      print("saved to", model_save_path)
 
-    # Plot loss according to log frequency
+    # Record loss according to log frequency
     if (total_epochs + epoch) % args.log_freq == 0:
       loss_over_time.append(loss)
+      
   # end for epoch in tqdm
 
   total_epochs += epoch + 1
+  
   # Print out a status according to frequency
   print("Epoch: {}, Loss: {}".format(total_epochs, loss.item()))
   print("Active layer:", active_layers)
   print("Layers in queue:", args.layer_queue)
 
 # end while total_epochs < args.max_epochs and active_layers != []:
+
+# Saving weights after each layer is finished
+model_save_path = args.save_path.format(str(total_epochs + "_epochs"))
+save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path):
