@@ -137,8 +137,10 @@ while total_epochs < args.max_epochs and active_layers != []:
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      fig.savefig(args.plot_file.format(active_layers[0][0]))
+      plot_path = args.plot_file.format(active_layers[0][0])
+      fig.savefig(plot_path)
       plt.close(fig)
+      print("Plotted to", plot_path)
       # Saving weights after each layer is finished
       model_save_path = "./logs/blender_paper_lego/student_model_{}.tar".format(active_layers[0][0]))
       if args.layer_queue:
@@ -152,7 +154,7 @@ while total_epochs < args.max_epochs and active_layers != []:
           'network_fine_state_dict': student_model_fine.state_dict(),
           'optimizer_state_dict': student_optim.state_dict(),
       }, model_save_path)
-      print("saved to ", model_save_path)
+      print("saved to", model_save_path)
 
     # Plot loss according to log frequency
     if (total_epochs + epoch) % args.log_freq == 0:
