@@ -155,7 +155,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       print("Plotted to", plot_path)
       
       # Save weights after each layer is finished
-      model_save_path = args.save_path.format(str("layer_" + active_layers[0][0]))
+      model_save_path = args.save_path.format("layer_" + str(active_layers[0][0]))
       save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path)
       
       # Get next layer from queue, unless done!
@@ -181,5 +181,5 @@ while total_epochs < args.max_epochs and active_layers != []:
 # end while total_epochs < args.max_epochs and active_layers != []:
 
 # Saving weights after each layer is finished
-model_save_path = args.save_path.format(str(total_epochs + "_epochs"))
+model_save_path = args.save_path.format(str(total_epochs) + "_epochs")
 save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path)
