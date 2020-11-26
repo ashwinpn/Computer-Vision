@@ -144,6 +144,7 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
 
     # Check to see if current active layers are within threshold
     if loss < args.loss_thresh:
+      print("")
       print("Completed layers: ", active_layers)
       
       # Plot loss to file
@@ -176,6 +177,7 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
   total_epochs += epoch + 1
   
   # Print out a status according to frequency
+  print("")
   print("Epoch: {}, Loss: {}".format(total_epochs, loss.item()))
   print("Active layer:", active_layers)
   print("Layers in queue:", args.layer_queue)
