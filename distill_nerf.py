@@ -25,6 +25,7 @@ parser.add_argument("--lr", type=float, default=5e-4, help="Initial learning rat
 parser.add_argument("--loss_thresh", type=float, default=.1, help="Active layers are done training when total loss is below this amount")
 parser.add_argument("--max_epochs", type=int, default=200000, help="Number of epochs to train for")
 parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|6,6|7,7|8,8|9,9|O,O", help="Layers to be compared during distillation")
+parser.add_argument("--plot_file", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
 
 args = parser.parse_args()
 
@@ -136,7 +137,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      fig.savefig(figure_file)
+      fig.savefig(args.plot_file.format(action_layers[0][0])
       plt.close(fig)
       if args.layer_queue:
         active_layers.append(args.layer_queue.popleft())
