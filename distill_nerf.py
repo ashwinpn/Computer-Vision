@@ -56,9 +56,9 @@ print(teacher_model)
 
 # NeRF class has been modified to track mins and maxes for all input
 maxes = saved['maxes'].to(device)
-print(maxes)
+print("maxes =", maxes)
 mins = saved['mins'].to(device)
-print(mins)
+print("mins =", mins)
 
 # Instantiate student models
 student_model = NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True)
@@ -137,7 +137,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
       ax.set_yscale('log')
-      fig.savefig(args.plot_file.format(action_layers[0][0]))
+      fig.savefig(args.plot_file.format(active_layers[0][0]))
       plt.close(fig)
       if args.layer_queue:
         active_layers.append(args.layer_queue.popleft())
