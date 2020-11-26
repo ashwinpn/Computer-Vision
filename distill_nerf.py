@@ -135,7 +135,7 @@ while total_epochs < args.max_epochs and active_layers != []:
       print("Completed layers: ", active_layers)
       fig, ax = plt.subplots(nrows=1, ncols=1)
       ax.plot(loss_over_time)
-      ax.yscale('log')
+      ax.set_yscale('log')
       fig.savefig(figure_file)
       plt.close(fig)
       if args.layer_queue:
