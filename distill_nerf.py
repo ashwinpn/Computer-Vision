@@ -74,6 +74,7 @@ print("Number of parameters in teacher network:", num_params_teacher, "\nNumber 
 print("Size of student model: {:.2f}% of teacher model.".format((num_params_student/num_params_teacher)*100))
 
 # Start of network distillation code
+OUTPUT = 'O'
 active_layers = [args.layer_queue.popleft()]
 loss_over_time = []
 
