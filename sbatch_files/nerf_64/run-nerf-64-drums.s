@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-#SBATCH --job-name=nerf-distill
+#SBATCH --job-name=nerf-64-drums
 #SBATCH --nodes=1
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
@@ -19,4 +19,4 @@ pip install torch==1.5.0+cu101 torchvision==0.6.0+cu101 -f https://download.pyto
 cd torchsearchsorted
 pip install .
 cd ..
-python distill_nerf.py saved_models/lego_64_100000.tar --t_width 64 --s_width 64 --max_epochs 200000
+python run_nerf.py --config configs/drums.txt --netwidth 64 --netwidth_fine 64
