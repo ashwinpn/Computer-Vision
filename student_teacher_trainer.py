@@ -87,6 +87,10 @@ for path in paths:
     print("mins =", mins)
 del teacher_model, teacher_model_fine
 
+class_vectors = []
+class_vectors.append(torch.tensor([1, 0], dtype=torch.float32).to(device))
+class_vectors.append(torch.tensor([0, 1], dtype=torch.float32).to(device))
+
 # Instantiate student models
 student_model = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
 student_model_fine = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
@@ -127,14 +131,17 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
     rand_input = rand_input.to(device)
     # Compute a forward pass
     # Do student first
-    student_out = student_model(rand_input, track_values=False)
-    student_fine_out = student_model_fine(rand_input, track_values=False)
-    student_out_hidden = student_model.hidden_states
-    student_fine_out_hidden = student_model_fine.hidden_states
-    loss = torch.zeros(1).to(device)
     
+    loss = torch.zeros(1).to(device)
     # Now iterate through teachers
-    for teacher_model, teacher_model_fine in zip(teacher_models, teacher_models_fine):
+    for teacher_model, teacher_model_fine, c in zip(teacher_models, teacher_models_fine, class_vectors):
+        student_model.Class = c
+        student_model_fine.Class = c
+        student_out = student_model(rand_input, track_values=False)
+        student_fine_out = student_model_fine(rand_input, track_values=False)
+        student_out_hidden = student_model.hidden_states
+        student_fine_out_hidden = student_model_fine.hidden_states
+    
         teacher_out = teacher_model(rand_input, track_values=False)
         teacher_fine_out = teacher_model_fine(rand_input, track_values=False)
         teacher_out_hidden = teacher_model.hidden_states
