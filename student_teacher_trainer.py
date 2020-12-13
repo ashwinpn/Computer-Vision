@@ -59,7 +59,7 @@ teacher_models = []
 teacher_models_fine = []
 paths = [args.nerf_path, args.nerf_path2]
 mins = None
-maxs = None
+maxes = None
 
 for path in paths:
     # Load pretrained "teacher" NeRF models
