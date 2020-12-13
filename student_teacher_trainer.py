@@ -107,12 +107,12 @@ active_layers = [args.layer_queue.popleft()]
 loss_over_time = []
 
 # Send all models to device
-for model in student_models:
+for model in teacher_models:
     model.to(device)
-teacher_model.to(device)
-for model_fine in student_models_fine:
+student_model.to(device)
+for model_fine in teacher_models_fine:
     model_fine.to(device)
-teacher_model_fine.to(device)
+student_model_fine.to(device)
 
 # Use same optimizer for both student models
 student_optim = torch.optim.Adam(list(student_model.parameters()) + list(student_model_fine.parameters()), lr=args.lr)
