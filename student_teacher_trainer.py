@@ -21,6 +21,7 @@ def save_model(global_step, student_model, student_model_fine, student_optim, mo
 
 parser = argparse.ArgumentParser()
 parser.add_argument(dest="nerf_path", type=str, help="Path to NeRF file")
+parser.add_argument(dest="nerf_path2", type=str, help="Path to NeRF file 2")
 parser.add_argument("--t_depth", type=int, default=8, help="Depth of teacher NeRF")
 parser.add_argument("--t_width", type=int, default=256, help="Width of teacher NeRF")
 parser.add_argument("--s_depth", type=int, default=8, help="Depth of student NeRF")
@@ -54,29 +55,39 @@ for arg in args.__dict__:
     print(arg, '=', getattr(args, arg))
 print("")
 
-# Load pretrained "teacher" NeRF models
-saved = torch.load(args.nerf_path)
-teacher_model = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
-teacher_model.load_state_dict(saved['network_fn_state_dict'])
-teacher_model.eval()
-teacher_model_fine = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
-teacher_model_fine.load_state_dict(saved['network_fine_state_dict'])
-teacher_model_fine.eval()
-print("Teacher model =", teacher_model)
+teacher_models = []
+teacher_models_fine = []
+paths = [args.nerf_path, args.nerf_path2]
+mins = []
+maxs = []
 
-# NeRF class has been modified to track mins and maxes for all input
-maxes = saved['maxes'].to(device)
-print("maxes =", maxes)
-mins = saved['mins'].to(device)
-print("mins =", mins)
+for path in paths:
+    # Load pretrained "teacher" NeRF models
+    saved = torch.load(paths)
+    teacher_model = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
+    teacher_model.load_state_dict(saved['network_fn_state_dict'])
+    teacher_model.eval()
+    teacher_model_fine = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
+    teacher_model_fine.load_state_dict(saved['network_fine_state_dict'])
+    teacher_model_fine.eval()
+    print("Teacher model =", teacher_model)
+    teacher_models.append(teacher_model)
+    teacher_models_fine.append(teacher_model_fine)
+
+    # NeRF class has been modified to track mins and maxes for all input
+    maxes.append(saved['maxes'].to(device))
+    print("maxes =", maxes)
+    mins.append(saved['mins'].to(device))
+    print("mins =", mins)
+del teacher_model, teacher_model_fine
 
 # Instantiate student models
-student_model = NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True)
-student_model_fine = NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True)
+student_model = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
+student_model_fine = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
 print("Student model =", student_model)
 
 num_params_teacher = 0
-for param in teacher_model.parameters():
+for param in teacher_model[0].parameters():
   num_params_teacher += param.numel()
 num_params_student = 0
 for param in student_model.parameters():
@@ -90,10 +101,12 @@ active_layers = [args.layer_queue.popleft()]
 loss_over_time = []
 
 # Send all models to device
-student_model = student_model.to(device)
-teacher_model = teacher_model.to(device)
-student_model_fine = student_model_fine.to(device)
-teacher_model_fine = teacher_model_fine.to(device)
+for model in student_models:
+    model.to(device)
+teacher_model.to(device)
+for model_fine in student_models_fine:
+    model_fine.to(device)
+teacher_model_fine.to(device)
 
 # Use same optimizer for both student models
 student_optim = torch.optim.Adam(list(student_model.parameters()) + list(student_model_fine.parameters()), lr=args.lr)
@@ -107,35 +120,38 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
     rand_input = (maxes - mins) * rand_input + mins
     rand_input = rand_input.to(device)
     # Compute a forward pass
-    # track_values=False tells the model not to track min and max values
-    teacher_out = teacher_model(rand_input, track_values=False)
+    # Do student first
     student_out = student_model(rand_input, track_values=False)
-    teacher_fine_out = teacher_model_fine(rand_input, track_values=False)
     student_fine_out = student_model_fine(rand_input, track_values=False)
-    # Get hidden states from models
-    teacher_out_hidden = teacher_model.hidden_states
     student_out_hidden = student_model.hidden_states
-    teacher_fine_out_hidden = teacher_model_fine.hidden_states
     student_fine_out_hidden = student_model_fine.hidden_states
-
-    # Compute loss as mse between active layers in both student and teacher models
     loss = torch.zeros(1).to(device)
-    for layer_tuple in active_layers:
-      if layer_tuple[0] == OUTPUT:
-        student_layer = student_out
-        student_fine_layer = student_fine_out
-      else:
-        student_layer = student_out_hidden[layer_tuple[0]]
-        student_fine_layer = student_fine_out_hidden[layer_tuple[0]]
+    
+    # Now iterate through teachers
+    for teacher_model, teacher_model_fine in zip(teacher_models, teacher_models_fine):
+        teacher_out = teacher_model(rand_input, track_values=False)
+        teacher_fine_out = teacher_model_fine(rand_input, track_values=False)
+        teacher_out_hidden = teacher_model.hidden_states
+        teacher_fine_out_hidden = teacher_model_fine.hidden_states
+       
 
-      if layer_tuple[1] == OUTPUT:
-        teacher_layer = teacher_out
-        teacher_fine_layer = teacher_fine_out
-      else:
-        teacher_layer = teacher_out_hidden[layer_tuple[1]]
-        teacher_fine_layer = teacher_fine_out_hidden[layer_tuple[1]]
+        # Compute loss as mse between active layers in both student and teacher models
+        for layer_tuple in active_layers:
+          if layer_tuple[0] == OUTPUT:
+            student_layer = student_out
+            student_fine_layer = student_fine_out
+          else:
+            student_layer = student_out_hidden[layer_tuple[0]]
+            student_fine_layer = student_fine_out_hidden[layer_tuple[0]]
 
-      loss += F.mse_loss(student_layer, teacher_layer) + F.mse_loss(student_fine_layer, teacher_fine_layer)
+          if layer_tuple[1] == OUTPUT:
+            teacher_layer = teacher_out
+            teacher_fine_layer = teacher_fine_out
+          else:
+            teacher_layer = teacher_out_hidden[layer_tuple[1]]
+            teacher_fine_layer = teacher_fine_out_hidden[layer_tuple[1]]
+
+          loss += F.mse_loss(student_layer, teacher_layer) + F.mse_loss(student_fine_layer, teacher_fine_layer)
 
     # Backprop
     student_optim.zero_grad()
