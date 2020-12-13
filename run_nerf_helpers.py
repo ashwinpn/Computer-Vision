@@ -253,6 +253,7 @@ class HyperNeRF(nn.Module):
         if self.use_viewdirs:
             alpha = F.linear(H, Weights[ALPHA][:,:-1], bias=Weights[ALPHA][:,-1])
             feature = F.linear(H, Weights[FEATURE][:,:-1], bias=Weights[FEATURE][:,-1])
+            self.hidden_states.append(feature)
             H = torch.cat([feature, input_views], -1)
 
             for i in VIEW_LINEAR:
