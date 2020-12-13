@@ -75,12 +75,12 @@ for path in paths:
     teacher_models_fine.append(teacher_model_fine)
 
     # NeRF class has been modified to track mins and maxes for all input
-    if maxes:
+    if maxes != None:
         maxes = torch.max(maxes, saved['maxes'].to(device)).to(device)
     else:
         maxes = saved['maxes'].to(device)
     print("maxes =", maxes)
-    if mins:
+    if mins != None:
         mins = torch.min(mins, saved['mins'].to(device)).to(device)
     else:
         mins = saved['mins'].to(device)
