@@ -58,8 +58,8 @@ print("")
 teacher_models = []
 teacher_models_fine = []
 paths = [args.nerf_path, args.nerf_path2]
-mins = []
-maxs = []
+mins = None
+maxs = None
 
 for path in paths:
     # Load pretrained "teacher" NeRF models
@@ -75,9 +75,15 @@ for path in paths:
     teacher_models_fine.append(teacher_model_fine)
 
     # NeRF class has been modified to track mins and maxes for all input
-    maxes.append(saved['maxes'].to(device))
+    if maxes:
+        maxes = torch.max(maxes, saved['maxes'].to(device)).to(device)
+    else:
+        maxes = saved['maxes'].to(device)
     print("maxes =", maxes)
-    mins.append(saved['mins'].to(device))
+    if mins:
+        mins = torch.min(mins, saved['mins'].to(device)).to(device)
+    else:
+        mins = saved['mins'].to(device)
     print("mins =", mins)
 del teacher_model, teacher_model_fine
 
