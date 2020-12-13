@@ -63,7 +63,7 @@ maxs = []
 
 for path in paths:
     # Load pretrained "teacher" NeRF models
-    saved = torch.load(paths)
+    saved = torch.load(path)
     teacher_model = NeRF(D=args.t_depth, W=args.t_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, use_viewdirs=True)
     teacher_model.load_state_dict(saved['network_fn_state_dict'])
     teacher_model.eval()
