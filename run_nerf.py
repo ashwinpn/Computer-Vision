@@ -193,6 +193,7 @@ def create_nerf(args):
                  input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
     if args.hyper:
         model = HyperNeRF(model, dev=device).to(device)
+        model.Class = torch.tensor([args.c_vec, (1-args.c_vec)], type=torch.float32).to(device)
     else:
         model = model.to(device)
     grad_vars = list(model.parameters())
@@ -204,6 +205,7 @@ def create_nerf(args):
                           input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
         if args.hyper:
             model_fine = HyperNeRF(model_fine, dev=device).to(device)
+            model_fine.Class = torch.tensor([args.c_vec, (1-args.c_vec)], type=torch.float32).to(device)
         else:
             model_fine = model_fine.to(device)
         grad_vars += list(model_fine.parameters())
@@ -545,6 +547,8 @@ def config_parser():
                         help="Use HyperNeRF as model")
     parser.add_argument("--skips", type=int, default=4,
                         help="Which layer to add skip connection to in model")
+    parser.add_argument("--c_vec", type=float, default=1.0,
+                        help="First number to use in class vector of hypernerf")
 
     return parser
 
