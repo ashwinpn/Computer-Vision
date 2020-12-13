@@ -93,7 +93,7 @@ student_model_fine = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=arg
 print("Student model =", student_model)
 
 num_params_teacher = 0
-for param in teacher_model[0].parameters():
+for param in teacher_models[0].parameters():
   num_params_teacher += param.numel()
 num_params_student = 0
 for param in student_model.parameters():
