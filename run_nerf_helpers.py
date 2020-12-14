@@ -118,6 +118,7 @@ class NeRF(nn.Module):
 
         if self.use_viewdirs:
             alpha = self.alpha_linear(h)
+            self.hidden_states.append(alpha)
             feature = self.feature_linear(h)
             self.hidden_states.append(feature)
             h = torch.cat([feature, input_views], -1)
@@ -252,6 +253,7 @@ class HyperNeRF(nn.Module):
 
         if self.use_viewdirs:
             alpha = F.linear(H, Weights[ALPHA][:,:-1], bias=Weights[ALPHA][:,-1])
+            self.hidden_states.append(alpha)
             feature = F.linear(H, Weights[FEATURE][:,:-1], bias=Weights[FEATURE][:,-1])
             self.hidden_states.append(feature)
             H = torch.cat([feature, input_views], -1)
