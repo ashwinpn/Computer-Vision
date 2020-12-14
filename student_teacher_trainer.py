@@ -34,7 +34,7 @@ parser.add_argument("--status_freq", type=int, default=1000, help="Frequency to 
 parser.add_argument("--lr", type=float, default=5e-4, help="Initial learning rate for distillation")
 parser.add_argument("--loss_thresh", type=float, default=.1, help="Active layers are done training when total loss is below this amount")
 parser.add_argument("--max_epochs", type=int, default=200000, help="Number of epochs to train for")
-parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|6,6|7,7|8,8|9,9|O,O", help="Layers to be compared during distillation")
+parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|6,6|7,7|8,8|9,9|10,10|O,O", help="Layers to be compared during distillation")
 parser.add_argument("--plot_path", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
 parser.add_argument("--save_path", type=str, default="./logs/blender_paper_lego/student_model_{}.tar", help="Path to save student models to, include {} for later formatting")
 
