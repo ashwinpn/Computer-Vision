@@ -179,8 +179,8 @@ class HyperNeRF(nn.Module):
         # Replace with actual latent variable
         #self.Z = torch.rand(Z_dim)
         self.Class_dim = Class_dim
-        cl = [0 for _ in range(Class_dim)]
-        cl[0] = 1
+        cl = [0. for _ in range(Class_dim)]
+        cl[0] = 1.
         self.Class = torch.tensor(cl, requires_grad=False).to(dev)
 
         weights_and_biases = []

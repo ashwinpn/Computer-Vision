@@ -88,8 +88,8 @@ for path in paths:
 del teacher_model, teacher_model_fine
 
 class_vectors = []
-class_vectors.append(torch.tensor([1, 0], dtype=torch.float32).to(device))
-class_vectors.append(torch.tensor([0, 1], dtype=torch.float32).to(device))
+class_vectors.append(torch.tensor([1, 0], dtype=torch.float32, requires_grad=False).to(device))
+class_vectors.append(torch.tensor([0, 1], dtype=torch.float32, requires_grad=False).to(device))
 
 # Instantiate student models
 student_model = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
