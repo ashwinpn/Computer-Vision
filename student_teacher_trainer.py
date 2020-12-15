@@ -37,6 +37,7 @@ parser.add_argument("--max_epochs", type=int, default=200000, help="Number of ep
 parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|6,6|7,7|8,8|9,9|10,10|O,O", help="Layers to be compared during distillation")
 parser.add_argument("--plot_path", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
 parser.add_argument("--save_path", type=str, default="./logs/blender_paper_lego/student_model_{}.tar", help="Path to save student models to, include {} for later formatting")
+parser.add_argument("--save_freq", type=int, default=50000, help="Frequency of saving (regardless of layer progress)")
 
 args = parser.parse_args()
 
@@ -210,6 +211,10 @@ for _ in tqdm(range(args.max_epochs//args.status_freq), desc='Total progress'):
   print("Epoch: {}, Loss: {}".format(total_epochs, loss.item()))
   print("Active layer:", active_layers)
   print("Layers in queue:", args.layer_queue)
+  
+  if total_epochs % args.save_freq == 0:
+    model_save_path = args.save_path.format(str(total_epochs) + "_epochs")
+    save_model(saved['global_step'], student_model, student_model_fine, student_optim, model_save_path)
   
   if done:
     break
