@@ -168,7 +168,7 @@ class AugNeRF(nn.Module):
     def __init__(self, D=8, W=256, input_ch=3, input_ch_views=3, output_ch=4, skips=[4], use_viewdirs=False, Class_dim = 2, dev='cpu'):
         """ 
         """
-        super(NeRF, self).__init__()
+        super(AugNeRF, self).__init__()
         self.D = D
         self.W = W
         self.input_ch = input_ch
