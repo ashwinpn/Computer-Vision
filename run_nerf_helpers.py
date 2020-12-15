@@ -164,6 +164,81 @@ class NeRF(nn.Module):
         self.alpha_linear.weight.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear]))
         self.alpha_linear.bias.data = torch.from_numpy(np.transpose(weights[idx_alpha_linear+1]))
         
+class AugNeRF(nn.Module):
+    def __init__(self, D=8, W=256, input_ch=3, input_ch_views=3, output_ch=4, skips=[4], use_viewdirs=False, Class_dim = 2, dev='cpu'):
+        """ 
+        """
+        super(NeRF, self).__init__()
+        self.D = D
+        self.W = W
+        self.input_ch = input_ch
+        self.input_ch_views = input_ch_views
+        self.skips = skips
+        self.use_viewdirs = use_viewdirs
+        self.maxes = torch.tensor([-9999.0 for _ in range(90)])
+        self.mins = torch.tensor([9999.0 for _ in range(90)])
+        
+        self.Class_dim = Class_dim
+        cl = [0. for _ in range(Class_dim)]
+        cl[0] = 1.
+        self.Class = torch.tensor(cl, requires_grad=False).to(dev)
+        
+        self.pts_linears = nn.ModuleList(
+            [nn.Linear(input_ch+Class_dim, W)] + [nn.Linear(W+Class_dim, W) if i not in self.skips else nn.Linear(W + input_ch+Class_dim, W) for i in range(D-1)])
+        
+        ### Implementation according to the official code release (https://github.com/bmild/nerf/blob/master/run_nerf_helpers.py#L104-L105)
+        self.views_linears = nn.ModuleList([nn.Linear(input_ch_views + W, W//2)])
+
+        ### Implementation according to the paper
+        # self.views_linears = nn.ModuleList(
+        #     [nn.Linear(input_ch_views + W, W//2)] + [nn.Linear(W//2, W//2) for i in range(D//2)])
+        
+        if use_viewdirs:
+            self.feature_linear = nn.Linear(W+Class_dim, W)
+            self.alpha_linear = nn.Linear(W+Class_dim, 1)
+            self.rgb_linear = nn.Linear((W//2)+Class_dim, 3)
+        else:
+            self.output_linear = nn.Linear(W+Class_dim, output_ch)
+
+    def forward(self, x, track_values=True):
+        if track_values:
+            with torch.no_grad():
+                max = x.max(dim=0)[0]
+                min = x.min(dim=0)[0]
+                self.maxes = torch.stack([self.maxes, max]).max(dim=0)[0]
+                self.mins = torch.stack([self.mins, min]).min(dim=0)[0]
+    
+        input_pts, input_views = torch.split(x, [self.input_ch, self.input_ch_views], dim=-1)
+        h = torch.cat([input_pts, self.Class.expand(input_pts.shape[0], self.Class.shape[-1])], -1)
+        self.hidden_states = []
+        for i, l in enumerate(self.pts_linears):
+            h = self.pts_linears[i](h)
+            self.hidden_states.append(h)
+            h = F.relu(h)
+            if i in self.skips:
+                h = torch.cat([input_pts, h], -1)
+            h = torch.cat([h, self.Class.expand(h.shape[0], self.Class.shape[-1])], -1)
+
+        if self.use_viewdirs:
+            alpha = self.alpha_linear(h)
+            self.hidden_states.append(alpha)
+            feature = self.feature_linear(h)
+            self.hidden_states.append(feature)
+            h = torch.cat([feature, input_views, self.Class.expand(feature.shape[0], self.Class.shape[-1])], -1)
+        
+            for i, l in enumerate(self.views_linears):
+                h = self.views_linears[i](h)
+                self.hidden_states.append(h)
+                h = F.relu(h)
+                h = torch.cat([h, self.Class.expand(h.shape[0], self.Class.shape[-1])], -1)
+
+            rgb = self.rgb_linear(h)
+            outputs = torch.cat([rgb, alpha], -1)
+        else:
+            outputs = self.output_linear(h)
+
+        return outputs    
+        
 class HyperNeRF(nn.Module):
     def __init__(self, nerf, Class_dim = 2, Z_dim = 16, C_dim = 1, verbose=False, dev='cpu'):
         super(HyperNeRF, self).__init__()

@@ -191,8 +191,13 @@ def create_nerf(args):
     model = NeRF(D=args.netdepth, W=args.netwidth,
                  input_ch=input_ch, output_ch=output_ch, skips=skips,
                  input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
-    if args.hyper:
-        model = HyperNeRF(model, dev=device).to(device)
+    if args.hyper or args.aug:
+        if args.hyper:
+            model = HyperNeRF(model, dev=device).to(device)
+        else:
+            model = AugNeRF(D=args.netdepth, W=args.netwidth,
+                 input_ch=input_ch, output_ch=output_ch, skips=skips,
+                 input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs, dev=device).to(device)
         model.Class = torch.tensor([args.c_vec, (1-args.c_vec)], dtype=torch.float32, requires_grad=False).to(device)
     else:
         model = model.to(device)
@@ -203,8 +208,13 @@ def create_nerf(args):
         model_fine = NeRF(D=args.netdepth_fine, W=args.netwidth_fine,
                           input_ch=input_ch, output_ch=output_ch, skips=skips,
                           input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs)
-        if args.hyper:
-            model_fine = HyperNeRF(model_fine, dev=device).to(device)
+        if args.hyper or args.aug:
+            if args.hyper:
+                model_fine = HyperNeRF(model_fine, dev=device).to(device)
+            else:
+                model_fine = AugNeRF(D=args.netdepth, W=args.netwidth,
+                    input_ch=input_ch, output_ch=output_ch, skips=skips,
+                    input_ch_views=input_ch_views, use_viewdirs=args.use_viewdirs, dev=device).to(device)
             model_fine.Class = torch.tensor([args.c_vec, (1-args.c_vec)], dtype=torch.float32, requires_grad=False).to(device)
         else:
             model_fine = model_fine.to(device)
@@ -545,6 +555,8 @@ def config_parser():
                         help="Number of iterations to train for")
     parser.add_argument("--hyper", action='store_true',
                         help="Use HyperNeRF as model")
+    parser.add_argument("--aug", action='store_true',
+                        help="Use AugNeRF as model")
     parser.add_argument("--skips", type=int, default=4,
                         help="Which layer to add skip connection to in model")
     parser.add_argument("--c_vec", type=float, default=1.0,

@@ -38,6 +38,8 @@ parser.add_argument("--layer_queue", type=str, default="0,0|1,1|2,2|3,3|4,4|5,5|
 parser.add_argument("--plot_path", type=str, default="./plots/layer_{}_.png", help="Path to save plots to, include {} for layer number")
 parser.add_argument("--save_path", type=str, default="./logs/blender_paper_lego/student_model_{}.tar", help="Path to save student models to, include {} for later formatting")
 parser.add_argument("--save_freq", type=int, default=50000, help="Frequency of saving (regardless of layer progress)")
+parser.add_argument("--hyper", action='store_true', help="Use HyperNeRF as model")
+parser.add_argument("--aug", action='store_true', help="Use AugNeRF as model")
 
 args = parser.parse_args()
 
@@ -93,8 +95,12 @@ class_vectors.append(torch.tensor([1, 0], dtype=torch.float32, requires_grad=Fal
 class_vectors.append(torch.tensor([0, 1], dtype=torch.float32, requires_grad=False).to(device))
 
 # Instantiate student models
-student_model = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
-student_model_fine = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
+if args.aug:
+    student_model = AugNeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True, dev=device)
+    student_model_fine = AugNeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True, dev=device)
+else:
+    student_model = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
+    student_model_fine = HyperNeRF(NeRF(D=args.s_depth, W=args.s_width, input_ch=args.input_ch, input_ch_views=args.input_ch_views, skips=args.s_skips, use_viewdirs=True))
 print("Student model =", student_model)
 
 num_params_teacher = 0
