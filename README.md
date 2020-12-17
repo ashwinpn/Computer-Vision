@@ -1,3 +1,13 @@
-Project submission for Computer Vision, NYU Fall 2020 semester. Two parts: <\ br>
+Project submission for Computer Vision, NYU Fall 2020 semester. Two parts:
 
-asdf
+Bounding Box + Depth Regularization + Mesh Reconstruction:
+
+HyperNeRF:
+Two Colab notebooks can be used to view results. No running is needed, as intermediate values are saved from last runtime.
+
+Initial Experimentation: https://colab.research.google.com/drive/1e59wWRycoYnqnnPzrdCWwtJQ3Rx4_mkM
+
+Teacher Student training: https://colab.research.google.com/drive/125d5MOD7JgYxCvtw6U4G32Nrs1wjwQti
+
+One additional Colab notebook which shows "Augmented" NeRF failure: 
+
