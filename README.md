@@ -2,6 +2,8 @@ Project submission for Computer Vision, NYU Fall 2020 semester. Two parts:
 
 Bounding Box + Depth Regularization + Mesh Reconstruction:
 
+See ./mesh/run.txt for instructions on how to run these experiments.
+
 HyperNeRF:
 Two Colab notebooks can be used to view results. No running is needed, as intermediate values are saved from last runtime.
 
