@@ -9,5 +9,5 @@ Initial Experimentation: https://colab.research.google.com/drive/1e59wWRycoYnqnn
 
 Teacher Student training: https://colab.research.google.com/drive/125d5MOD7JgYxCvtw6U4G32Nrs1wjwQti
 
-One additional Colab notebook which shows "Augmented" NeRF failure: 
+One additional Colab notebook which shows "Augmented" NeRF failure: https://colab.research.google.com/drive/1CQlbvjQK17EgOvh91vaE5D4aY-DTVivw?usp=sharing
 
