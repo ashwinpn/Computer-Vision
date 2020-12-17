@@ -4,7 +4,7 @@ Bounding Box + Depth Regularization + Mesh Reconstruction:
 
 See ./mesh/run.txt for instructions on how to run these experiments.
 
-
+![HyperNeRFComparison](HyperComparison.jpg)
 
 HyperNeRF:
 Two Colab notebooks can be used to view results. No running is needed, as intermediate values are saved from last runtime.
