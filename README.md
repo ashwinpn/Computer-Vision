@@ -6,7 +6,7 @@ See ./mesh/run.txt for instructions on how to run these experiments.
 
 ![HyperNeRFComparison](HyperComparison.jpg)
 
-HyperNeRF:
+**HyperNeRF**:
 Two Colab notebooks can be used to view results. No running is needed, as intermediate values are saved from last runtime.
 
 Initial Experimentation: https://colab.research.google.com/drive/1e59wWRycoYnqnnPzrdCWwtJQ3Rx4_mkM?usp=sharing
