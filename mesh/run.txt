@@ -5,3 +5,5 @@ pip install -r requirements.txt
 Training:
 
 python train_nerf.py --config config/lego.yml
+
+See the config files for changing the parameters 
