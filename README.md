@@ -1,7 +1,5 @@
 Project submission for Computer Vision, NYU Fall 2020 semester. Two parts:
 
-<br \>
-
 Bounding Box + Depth Regularization + Mesh Reconstruction:
 
 See ./mesh/run.txt for instructions on how to run these experiments.
